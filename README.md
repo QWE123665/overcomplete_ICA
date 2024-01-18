@@ -1,2 +1,8 @@
 # ICA
-Code, graphs and data associated to the paper about identifiability of linear ICA.
+Code, graphs and data associated to the paper: Identifiability of overcomplete independent component analysis.
+
+SPM.py, helper_functions.py are code of subspace power method from the paper: Subspace power method for symmetric tensor decomposition and generalized PCA by Joe Kileel, João M. Pereira.
+
+algorithm_related_functions.py is the code for the Algorithm 1 in our paper.
+
+The folder 'plots_data' contains the numerical data and plots shown in section 7 of our paper.
