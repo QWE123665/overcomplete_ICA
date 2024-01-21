@@ -16,7 +16,7 @@ for i from 1 to 11 do B_i= toList{A_i**A_i}
 
 -- checking (A_1,I_5) identifable 
 D_1=matrix{B_1,B_2,B_3,B_4,B_7,B_8,B_9,B_10,B_11}
--- B is A\odot A
+-- D_1 is A\odot A
 C=transpose(D_1)
 F=submatrix'(C,{0,5,6,10,11,12,15,16,17,18,20,21,22,23,24},{4,5,6,7,8})
 v=matrix{{l_1},{l_2},{l_3},{l_4}}
@@ -33,7 +33,7 @@ rank D_1
 
 -- checking (A_1,a_5,I_5) identifable 
 D_2=matrix{B_1,B_2,B_3,B_4,B_5,B_7,B_8,B_9,B_10,B_11}
--- B is A\odot A
+-- D_2 is A\odot A
 C=transpose(B)
 F=submatrix'(C,{0,5,6,10,11,12,15,16,17,18,20,21,22,23,24},{5,6,7,8,9})
 v=matrix{{l_1},{l_2},{l_3},{l_4},{l_5}}
@@ -50,7 +50,7 @@ rank D_2
 
 -- checking (A_1,a_5,a_6,I_5) identifable 
 D_3=matrix{B_1,B_2,B_3,B_4,B_5,B_6,B_7,B_8,B_9,B_10,B_11}
--- B is A\odot A
+-- D_3 is A\odot A
 C=transpose(B)
 F=submatrix'(C,{0,5,6,10,11,12,15,16,17,18,20,21,22,23,24},{6,7,8,9,10})
 v=matrix{{l_1},{l_2},{l_3},{l_4},{l_5},{l_6}}
