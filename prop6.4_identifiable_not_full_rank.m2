@@ -63,3 +63,21 @@ for i from 0 to (n-1) list eliminate({l_1,l_2,l_3,l_4,l_5},L_i)
 -- all the solutions correspond to the existing columns of A, so the matrix is identifiable
 rank D_3
 -- rank is 10 so A\odot A does not have full rank
+
+
+-- checking rank A=4, J=7, then A\odot A does not have full rank unless it has collinear columns
+--without loss of generality, A has size 4*7 and the last four columns of A form the identity matrix
+restart
+R=QQ[a_1..a_4,b_1..b_4,c_1..c_4,l_1..l_3]
+A_1=matrix{toList{a_1..a_4}}
+A_2=matrix{toList{b_1..b_4}}
+A_3=matrix{toList{c_1..c_4}}
+A_4=matrix{toList{1,0,0,0}}
+A_5=matrix{toList{0,1,0,0}}
+A_6=matrix{toList{0,0,1,0}}
+A_7=matrix{toList{0,0,0,1}}
+for i from 1 to 7 do B_i= toList{A_i**A_i}
+B=matrix{B_1,B_2,B_3,B_4,B_5,B_6,B_7}
+I=minors(7,B);
+minimalPrimes I
+-- all the minimal primes of I correspond to some collumns of A are collinear or there exist three columns of A forming a matrix of rank 2
