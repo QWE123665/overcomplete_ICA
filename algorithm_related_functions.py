@@ -12,7 +12,72 @@ from PyMoments import kstat
 from itertools import product
 
 
-# recoveri mixing matrix using accurate cumulant tensors
+
+# recover mixing matrix from cumulant tensors
+def recoveringmatrix_cumulant(J,second_order_kstats,fourth_order_kstats):
+    I=second_order_kstats.shape[0]
+    cols,lambdas=subspace_power_method(fourth_order_kstats,n=4,d=I,r=J-1)
+    def returnmindistancebewteenvectors(cols):
+        def distancebewteenvectors(v1,v2):
+            v1=v1.reshape(-1,1)
+            v2=v2.reshape(-1,1)
+            M=v1@np.transpose(v1)-v2@np.transpose(v2)
+            return np.sum(M*M)
+        lens=cols.shape[1]
+        error=1
+        for i in range(lens):
+            for j in range(i+1,lens):
+                error=min(error,distancebewteenvectors(cols[:,i],cols[:,j]))
+        return error
+    step=0
+    while returnmindistancebewteenvectors(cols)<0.1 and step<100:
+        cols,lambdas=subspace_power_method(fourth_order_kstats,n=4,d=I,r=J-1)
+        step+=1
+    
+    # now we use second cumulant to find the last column of the mixing matrix 
+    # by minimizing the distance bewteen a matrix in the linear span of the second cumulant matrix 
+    # and all the rank 1 matrices M_1,...M_{J-1} obtained from the first J-1 columns of A
+    rank1_matrixlist=[]
+    for i in range(J-1):
+        vector=cols[:,i].reshape(-1,1)
+        matrix=vector@ np.transpose(vector)
+        rank1_matrixlist.append(matrix)
+    #function returning the distance between second_order_kstats-l_1*M_1-...-l_{J-1}*M_{J-1} and v\otimes v
+    # input is the vector (l|v)
+    def sumofsquare(x):
+        l=x[:J]
+        v=x[J:]
+        v=v.reshape(-1,1)
+        n=len(l)
+        M=second_order_kstats
+        for i in range(n-1):
+            M=M-l[i]*rank1_matrixlist[i]
+        M=M-l[-1]*v@np.transpose(v)
+        return np.sum(M*M)
+    vlist=[]
+    errorlist=[]
+    for x in range(10):
+        #initialize a random start point
+        l0= np.random.randn(J).reshape(-1,1)
+        v0 = np.transpose(uniform_direction(I).rvs(1))
+        x=np.vstack((l0,v0)).reshape(-1)
+        # optimizition
+        es = minimize(sumofsquare, x, method='Powell')
+        # recover last column of A
+        v=es.x[J:]/np.linalg.norm(es.x[J:])
+        vlist.append(v)
+        errorlist.append(es.fun)
+    minerrorindex=errorlist.index(min(errorlist))
+    v=vlist[minerrorindex]
+    #recover A up to permutation and sign
+    estimateA=np.hstack((cols,v.reshape(-1,1)))
+    return estimateA
+    
+
+
+
+
+# recovering mixing matrix using accurate cumulant tensors computed from the mixing matrix 
 def recovermixingmatrix_accurate(I,J,A,normal_variance):
     # generate the second and fourth cumulant tensors
     second_order_kstats = A[:,:-1]@ np.transpose(A[:,:-1])+normal_variance*A[:,-1].reshape(-1,1)@A[:,-1].reshape(1,-1)
@@ -176,7 +241,7 @@ def observeddata(samplesize,I,J,flag):
     return A,observeddata
 
 
-# recover mixing matrix using real data or synthetic data
+# recover mixing matrix using sample cumulants of real data or synthetic data
 def recovermixingmatrix_sample(I,J,observeddata):
     # generate the second and fourth cumulant tensors
     second_order_kstats,fourth_order_kstats=cumulant_tensors(observeddata)
@@ -235,7 +300,7 @@ def recovermixingmatrix_sample(I,J,observeddata):
 
 
 
-# recover mixing matrix using real data or synthetic data with better optimization
+# recover mixing matrix using sample cummulants of real data or synthetic data with better optimization
 def recovermixingmatrix_realdata(I,J,observeddata):
     # generate the second and fourth cumulant tensors
     second_order_kstats,fourth_order_kstats=cumulant_tensors(observeddata)
@@ -297,69 +362,3 @@ def recovermixingmatrix_realdata(I,J,observeddata):
     #recover A up to permutation and sign
     estimateA=np.hstack((cols,v.reshape(-1,1)))
     return estimateA
-
-
-
-
-
-
-# recover mixing matrix from cumulant tensors
-def recoveringmatrix_cumulant(J,second_order_kstats,fourth_order_kstats):
-    I=second_order_kstats.shape[0]
-    cols,lambdas=subspace_power_method(fourth_order_kstats,n=4,d=I,r=J-1)
-    def returnmindistancebewteenvectors(cols):
-        def distancebewteenvectors(v1,v2):
-            v1=v1.reshape(-1,1)
-            v2=v2.reshape(-1,1)
-            M=v1@np.transpose(v1)-v2@np.transpose(v2)
-            return np.sum(M*M)
-        lens=cols.shape[1]
-        error=1
-        for i in range(lens):
-            for j in range(i+1,lens):
-                error=min(error,distancebewteenvectors(cols[:,i],cols[:,j]))
-        return error
-    step=0
-    while returnmindistancebewteenvectors(cols)<0.1 and step<100:
-        cols,lambdas=subspace_power_method(fourth_order_kstats,n=4,d=I,r=J-1)
-        step+=1
-    
-    # now we use second cumulant to find the last column of the mixing matrix 
-    # by minimizing the distance bewteen a matrix in the linear span of the second cumulant matrix 
-    # and all the rank 1 matrices M_1,...M_{J-1} obtained from the first J-1 columns of A
-    rank1_matrixlist=[]
-    for i in range(J-1):
-        vector=cols[:,i].reshape(-1,1)
-        matrix=vector@ np.transpose(vector)
-        rank1_matrixlist.append(matrix)
-    #function returning the distance between second_order_kstats-l_1*M_1-...-l_{J-1}*M_{J-1} and v\otimes v
-    # input is the vector (l|v)
-    def sumofsquare(x):
-        l=x[:J]
-        v=x[J:]
-        v=v.reshape(-1,1)
-        n=len(l)
-        M=second_order_kstats
-        for i in range(n-1):
-            M=M-l[i]*rank1_matrixlist[i]
-        M=M-l[-1]*v@np.transpose(v)
-        return np.sum(M*M)
-    vlist=[]
-    errorlist=[]
-    for x in range(10):
-        #initialize a random start point
-        l0= np.random.randn(J).reshape(-1,1)
-        v0 = np.transpose(uniform_direction(I).rvs(1))
-        x=np.vstack((l0,v0)).reshape(-1)
-        # optimizition
-        es = minimize(sumofsquare, x, method='Powell')
-        # recover last column of A
-        v=es.x[J:]/np.linalg.norm(es.x[J:])
-        vlist.append(v)
-        errorlist.append(es.fun)
-    minerrorindex=errorlist.index(min(errorlist))
-    v=vlist[minerrorindex]
-    #recover A up to permutation and sign
-    estimateA=np.hstack((cols,v.reshape(-1,1)))
-    return estimateA
-    
