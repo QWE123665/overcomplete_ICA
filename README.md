@@ -1,4 +1,4 @@
-# ICA
+# Identifiability of overcomplete independent component analysis
 Code, graphs and data associated to the paper: Identifiability of overcomplete independent component analysis.
 
 SPM.py, helper_functions.py are the codes of the subspace power method from the paper: Subspace power method for symmetric tensor decomposition and generalized PCA by Joe Kileel, João M. Pereira.
